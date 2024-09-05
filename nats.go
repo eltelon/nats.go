@@ -2469,6 +2469,7 @@ func (nc *Conn) connect() (bool, error) {
 				fmt.Println("Conexión exitosa con el servidor", i)
 				break
 			} else {
+				fmt.Println("Error al procesar la conexión con el servidor", i, err.Error())
 				nc.mu.Unlock()
 				nc.close(DISCONNECTED, false, err)
 				nc.mu.Lock()
