@@ -2450,6 +2450,8 @@ func (nc *Conn) connect() (bool, error) {
 	nc.initc = true
 	// The pool may change inside the loop iteration due to INFO protocol.
 	for i := 0; i < len(nc.srvPool); i++ {
+		fmt.Println("Se intenta conectar con el servidor", i)
+		fmt.Println("nc.srvPool[i]", nc.srvPool[i])
 		nc.current = nc.srvPool[i]
 
 		if err = nc.createConn(); err == nil {
