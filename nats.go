@@ -845,6 +845,7 @@ type MsgHandler func(msg *Msg)
 func Connect(url string, options ...Option) (*Conn, error) {
 	opts := GetDefaultOptions()
 	opts.Servers = processUrlString(url)
+	fmt.Println("opts.Servers", opts.Servers)
 	for _, opt := range options {
 		if opt != nil {
 			if err := opt(&opts); err != nil {
