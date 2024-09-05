@@ -2815,7 +2815,7 @@ func (nc *Conn) doReconnect(err error, forceReconnect bool) {
 		}
 	}
 
-	fmt.Println("Debemos buscar una ip a reconectar")
+	fmt.Println("Debemos buscar una ip a reconectar", len(nc.srvPool))
 	for i := 0; len(nc.srvPool) > 0; {
 		cur, err := nc.selectNextServer()
 		if err != nil {
