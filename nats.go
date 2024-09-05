@@ -1893,6 +1893,14 @@ func (nc *Conn) addURLToPool(sURL string, implicit, saveTLSName bool) error {
 	}
 
 	s := &srv{url: u, isImplicit: implicit, tlsName: tlsName}
+
+	for _, existingSrv := range nc.srvPool {
+		if existingSrv.url == s.url && existingSrv.isImplicit == s.isImplicit && existingSrv.tlsName == s.tlsName {
+			fmt.Println("addURLToPool finish, El objeto ya existe en la lista.")
+			return nil
+		}
+	}
+
 	nc.srvPool = append(nc.srvPool, s)
 	nc.urls[u.Host] = struct{}{}
 	fmt.Println("addURLToPool finish")
