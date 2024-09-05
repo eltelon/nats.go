@@ -1665,11 +1665,12 @@ func (nc *Conn) currentServer() (int, *srv) {
 
 // Pop the current server and put onto the end of the list. Select head of list as long
 // as number of reconnect attempts under MaxReconnect.
-func (nc *Conn) selectNextServer() (*srv, error) {
-	i, _ := nc.currentServer()
-	if i < 0 {
-		return nil, ErrNoServers
-	}
+func (nc *Conn) selectNextServerOld() (*srv, error) {
+	i := 0
+	// i, _ := nc.currentServer()
+	// if i < 0 {
+	// 	return nil, ErrNoServers
+	// }
 	// sp := nc.srvPool
 	// num := len(sp)
 	// copy(sp[i:num-1], sp[i+1:num])
@@ -1695,6 +1696,44 @@ func (nc *Conn) selectNextServer() (*srv, error) {
 	if maxReconnect >= 0 && nextServer.reconnects >= maxReconnect {
 		// Si el siguiente servidor alcanzó el límite de reconexiones, continuar con el siguiente
 		return nc.selectNextServer()
+	}
+
+	// Actualizar el índice de selección
+	nc.current = nextServer
+	return nextServer, nil
+
+}
+
+func (nc *Conn) selectNextServer(i int) (*srv, error) {
+	// i, _ := nc.currentServer()
+	// if i < 0 {
+	// 	return nil, ErrNoServers
+	// }
+	// sp := nc.srvPool
+	// num := len(sp)
+	// copy(sp[i:num-1], sp[i+1:num])
+	// maxReconnect := nc.Opts.MaxReconnect
+	// if maxReconnect < 0 || s.reconnects < maxReconnect {
+	// 	nc.srvPool[num-1] = s
+	// } else {
+	// 	nc.srvPool = sp[0 : num-1]
+	// }
+	// if len(nc.srvPool) <= 0 {
+	// 	nc.current = nil
+	// 	return nil, ErrNoServers
+	// }
+	// nc.current = nc.srvPool[0]
+	// return nc.srvPool[0], nil
+
+	// Obtener el índice del siguiente servidor
+	nextIndex := (i + 1) % len(nc.srvPool)
+	nextServer := nc.srvPool[nextIndex]
+
+	// Verificar el límite de reconexiones del siguiente servidor
+	maxReconnect := nc.Opts.MaxReconnect
+	if maxReconnect >= 0 && nextServer.reconnects >= maxReconnect {
+		// Si el siguiente servidor alcanzó el límite de reconexiones, continuar con el siguiente
+		return nc.selectNextServer(i + 1)
 	}
 
 	// Actualizar el índice de selección
@@ -2849,7 +2888,7 @@ func (nc *Conn) doReconnect(err error, forceReconnect bool) {
 
 	fmt.Println("Debemos buscar una ip a reconectar", len(nc.srvPool))
 	for i := 0; len(nc.srvPool) > 0; {
-		cur, err := nc.selectNextServer()
+		cur, err := nc.selectNextServer(i)
 		if err != nil {
 			nc.err = err
 			break
