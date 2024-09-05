@@ -802,6 +802,7 @@ type serverInfo struct {
 	Cluster      string   `json:"cluster,omitempty"`
 	ConnectURLs  []string `json:"connect_urls,omitempty"`
 	LameDuckMode bool     `json:"ldm,omitempty"`
+	ServerTags   []string `json:"server_tags,omitempty"`
 }
 
 const (
