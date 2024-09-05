@@ -1991,6 +1991,7 @@ build_string:
 		if i >= 0 {
 			end := r.off + i + 1
 			s += string(r.buf[r.off:end])
+			fmt.Println("ReadString ", s)
 			r.off = end
 			if r.off >= r.n {
 				r.off = -1
