@@ -2720,7 +2720,9 @@ func (nc *Conn) sendConnect() error {
 
 // reads a protocol line.
 func (nc *Conn) readProto() (string, error) {
-	return nc.br.ReadString('\n')
+	rs, err := nc.br.ReadString('\n')
+	fmt.Println("readProto rs: ", rs)
+	return rs, err
 }
 
 // A control protocol line.
