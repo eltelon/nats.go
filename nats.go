@@ -2817,12 +2817,12 @@ func (nc *Conn) doReconnect(err error, forceReconnect bool) {
 
 	fmt.Println("Debemos buscar una ip a reconectar")
 	for i := 0; len(nc.srvPool) > 0; {
-		fmt.Println("Buscando ip a reconectar", nc.srvPool[i].url)
 		cur, err := nc.selectNextServer()
 		if err != nil {
 			nc.err = err
 			break
 		}
+		fmt.Println("Vamos a intentar reconectar a la ip: ", cur.url.Host)
 
 		doSleep := i+1 >= len(nc.srvPool) && !forceReconnect
 		forceReconnect = false
