@@ -2449,6 +2449,7 @@ func (nc *Conn) processConnectInit() error {
 	// Wait for the PONG response (or any error that we get from the server).
 	err = nc.sendConnect()
 	if err != nil {
+		fmt.Println("sendConnect err ", err.Error())
 		return err
 	}
 
@@ -2490,8 +2491,8 @@ func (nc *Conn) connect() (bool, error) {
 	// The pool may change inside the loop iteration due to INFO protocol.
 	for i := 0; i < len(nc.srvPool); i++ {
 		fmt.Println("Se intenta conectar con el servidor", i)
-		fmt.Println("nc.srvPool[i]", nc.srvPool[i].url)
 		nc.current = nc.srvPool[i]
+		fmt.Println("nc.srvPool[i]", nc.current.url)
 
 		if err = nc.createConn(); err == nil {
 			// This was moved out of processConnectInit() because
@@ -2774,6 +2775,7 @@ func (nc *Conn) sendConnect() error {
 				// in doReconnect()).
 				nc.processAuthError(authErr)
 			}
+			fmt.Println("Error al enviar el connectProto", proto)
 			return &natsProtoErr{proto}
 		}
 
