@@ -3528,6 +3528,7 @@ func (nc *Conn) processInfo(info string) error {
 		return nil
 	}
 	var ncInfo serverInfo
+	fmt.Println("processInfo | Vamos a procesar la info: ", info)
 	if err := json.Unmarshal([]byte(info), &ncInfo); err != nil {
 		return err
 	}
