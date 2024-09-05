@@ -3591,6 +3591,7 @@ func (nc *Conn) processInfo(info string) error {
 		if _, present := nc.urls[curl]; !present {
 			hasNew = true
 		}
+		fmt.Println("processInfo | Vamos a agregar la ip: ", curl)
 		nc.addURLToPool(fmt.Sprintf("%s://%s", nc.connScheme(), curl), true, saveTLS)
 	}
 	if hasNew {
