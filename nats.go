@@ -2171,6 +2171,7 @@ func (nc *Conn) waitForExits() {
 // this call will force an immediate reconnect attempt (bypassing
 // the current reconnect delay).
 func (nc *Conn) ForceReconnect() error {
+	fmt.Println("ForceReconnect")
 	nc.mu.Lock()
 	defer nc.mu.Unlock()
 
@@ -2201,6 +2202,8 @@ func (nc *Conn) ForceReconnect() error {
 
 	nc.changeConnStatus(RECONNECTING)
 	go nc.doReconnect(nil, true)
+
+	fmt.Println("ForceReconnect done")
 	return nil
 }
 
