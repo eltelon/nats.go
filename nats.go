@@ -1856,6 +1856,8 @@ func (nc *Conn) addURLToPool(sURL string, implicit, saveTLSName bool) error {
 	s := &srv{url: u, isImplicit: implicit, tlsName: tlsName}
 	nc.srvPool = append(nc.srvPool, s)
 	nc.urls[u.Host] = struct{}{}
+	fmt.Println("addURLToPool finish")
+	fmt.Println(nc.srvPool)
 	return nil
 }
 
