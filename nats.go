@@ -1754,6 +1754,7 @@ func (nc *Conn) setupServerPool() error {
 		}
 	}
 
+	fmt.Println("nc.srvPool", nc.srvPool)
 	return nc.pickServer()
 }
 
