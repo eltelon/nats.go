@@ -2465,6 +2465,8 @@ func (nc *Conn) connect() (bool, error) {
 				nc.current.didConnect = true
 				nc.current.reconnects = 0
 				nc.current.lastErr = nil
+
+				fmt.Println("Conexión exitosa con el servidor", i)
 				break
 			} else {
 				nc.mu.Unlock()
