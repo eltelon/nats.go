@@ -2522,6 +2522,7 @@ func (nc *Conn) processExpectedInfo() error {
 	}
 
 	// Parse the protocol
+	fmt.Println("processExpectedInfo init")
 	if err := nc.processInfo(c.args); err != nil {
 		return err
 	}
@@ -3616,6 +3617,7 @@ func (nc *Conn) processInfo(info string) error {
 func (nc *Conn) processAsyncInfo(info []byte) {
 	nc.mu.Lock()
 	// Ignore errors, we will simply not update the server pool...
+	fmt.Println("processAsyncInfo init")
 	nc.processInfo(string(info))
 	nc.mu.Unlock()
 }
