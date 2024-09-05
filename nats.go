@@ -1695,7 +1695,7 @@ func (nc *Conn) selectNextServerOld() (*srv, error) {
 	maxReconnect := nc.Opts.MaxReconnect
 	if maxReconnect >= 0 && nextServer.reconnects >= maxReconnect {
 		// Si el siguiente servidor alcanzó el límite de reconexiones, continuar con el siguiente
-		return nc.selectNextServer()
+		return nc.selectNextServerOld()
 	}
 
 	// Actualizar el índice de selección
