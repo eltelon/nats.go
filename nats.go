@@ -2734,6 +2734,7 @@ func (nc *Conn) readOp(c *control) error {
 	if err != nil {
 		return err
 	}
+	fmt.Println("readOp", line)
 	parseControl(line, c)
 	return nil
 }
