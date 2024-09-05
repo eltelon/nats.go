@@ -1857,8 +1857,14 @@ func (nc *Conn) addURLToPool(sURL string, implicit, saveTLSName bool) error {
 	nc.srvPool = append(nc.srvPool, s)
 	nc.urls[u.Host] = struct{}{}
 	fmt.Println("addURLToPool finish")
-	fmt.Println(nc.srvPool)
+	printServerPool(nc.srvPool)
 	return nil
+}
+
+func printServerPool(servers []*srv) {
+	for i, s := range servers {
+		fmt.Printf("Server[%d]: %s\n", i, s.url)
+	}
 }
 
 // shufflePool swaps randomly elements in the server pool
