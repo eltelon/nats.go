@@ -2009,7 +2009,6 @@ build_string:
 		if i >= 0 {
 			end := r.off + i + 1
 			s += string(r.buf[r.off:end])
-			fmt.Println("ReadString ", s)
 			r.off = end
 			if r.off >= r.n {
 				r.off = -1
@@ -2541,7 +2540,6 @@ func (nc *Conn) processExpectedInfo() error {
 	}
 
 	// Parse the protocol
-	fmt.Println("processExpectedInfo init")
 	if err := nc.processInfo(c.args); err != nil {
 		return err
 	}
@@ -2740,7 +2738,6 @@ func (nc *Conn) sendConnect() error {
 // reads a protocol line.
 func (nc *Conn) readProto() (string, error) {
 	rs, err := nc.br.ReadString('\n')
-	fmt.Println("readProto rs: ", rs)
 	return rs, err
 }
 
@@ -2755,7 +2752,6 @@ func (nc *Conn) readOp(c *control) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println("readOp", line)
 	parseControl(line, c)
 	return nil
 }
@@ -3551,7 +3547,6 @@ func (nc *Conn) processInfo(info string) error {
 		return nil
 	}
 	var ncInfo serverInfo
-	fmt.Println("processInfo | Vamos a procesar la info: ", info)
 	if err := json.Unmarshal([]byte(info), &ncInfo); err != nil {
 		return err
 	}
@@ -3639,7 +3634,6 @@ func (nc *Conn) processInfo(info string) error {
 func (nc *Conn) processAsyncInfo(info []byte) {
 	nc.mu.Lock()
 	// Ignore errors, we will simply not update the server pool...
-	fmt.Println("processAsyncInfo init")
 	nc.processInfo(string(info))
 	nc.mu.Unlock()
 }
