@@ -2797,9 +2797,9 @@ func (nc *Conn) checkPriorityServer(url string) {
 		}
 	}
 	if !isPriorityServer {
-		fmt.Println("Este nodo es principal")
-	} else {
 		fmt.Println("Este nodo NO es principal")
+	} else {
+		fmt.Println("Este nodo es principal")
 	}
 }
 
@@ -2988,7 +2988,7 @@ func (nc *Conn) doReconnect(err error, forceReconnect bool) {
 		nc.Flush()
 
 		if nc.Opts.CheckPriorityServers {
-			fmt.Println("se va a verificar si la ip es de un nodo principal")
+			fmt.Println("se va a verificar si la ip es de un nodo principal", cur.url.Host)
 			nc.checkPriorityServer(cur.url.Host)
 		}
 
