@@ -850,6 +850,7 @@ func Connect(url string, options ...Option) (*Conn, error) {
 	opts := GetDefaultOptions()
 	opts.Servers = processUrlString(url)
 	opts.PriorityServers = opts.Servers
+	fmt.Println("opts.PriorityServers", opts.PriorityServers)
 	fmt.Println("opts.Servers", opts.Servers)
 	for _, opt := range options {
 		if opt != nil {
