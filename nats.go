@@ -278,7 +278,9 @@ type Options struct {
 
 	// Servers is a configured set of servers which this client
 	// will use when attempting to connect.
-	Servers []string
+	Servers              []string
+	PriorityServers      []string
+	CheckPriorityServers bool
 
 	// NoRandomize configures whether we will randomize the
 	// server pool.
@@ -847,6 +849,7 @@ type MsgHandler func(msg *Msg)
 func Connect(url string, options ...Option) (*Conn, error) {
 	opts := GetDefaultOptions()
 	opts.Servers = processUrlString(url)
+	opts.PriorityServers = opts.Servers
 	fmt.Println("opts.Servers", opts.Servers)
 	for _, opt := range options {
 		if opt != nil {
@@ -997,6 +1000,13 @@ func NoReconnect() Option {
 func DontRandomize() Option {
 	return func(o *Options) error {
 		o.NoRandomize = true
+		return nil
+	}
+}
+
+func PriorityServers() Option {
+	return func(o *Options) error {
+		o.CheckPriorityServers = true
 		return nil
 	}
 }
@@ -1666,33 +1676,31 @@ func (nc *Conn) currentServer() (int, *srv) {
 // Pop the current server and put onto the end of the list. Select head of list as long
 // as number of reconnect attempts under MaxReconnect.
 func (nc *Conn) selectNextServerOld() (*srv, error) {
-	i := 0
-	// i, _ := nc.currentServer()
-	// if i < 0 {
-	// 	return nil, ErrNoServers
-	// }
-	// sp := nc.srvPool
-	// num := len(sp)
-	// copy(sp[i:num-1], sp[i+1:num])
-	// maxReconnect := nc.Opts.MaxReconnect
-	// if maxReconnect < 0 || s.reconnects < maxReconnect {
-	// 	nc.srvPool[num-1] = s
-	// } else {
-	// 	nc.srvPool = sp[0 : num-1]
-	// }
-	// if len(nc.srvPool) <= 0 {
-	// 	nc.current = nil
-	// 	return nil, ErrNoServers
-	// }
-	// nc.current = nc.srvPool[0]
-	// return nc.srvPool[0], nil
+	i, _ := nc.currentServer()
+	if i < 0 {
+		return nil, ErrNoServers
+	}
+	sp := nc.srvPool
+	num := len(sp)
+	copy(sp[i:num-1], sp[i+1:num])
+	maxReconnect := nc.Opts.MaxReconnect
+	if maxReconnect < 0 || s.reconnects < maxReconnect {
+		nc.srvPool[num-1] = s
+	} else {
+		nc.srvPool = sp[0 : num-1]
+	}
+	if len(nc.srvPool) <= 0 {
+		nc.current = nil
+		return nil, ErrNoServers
+	}
+	nc.current = nc.srvPool[0]
+	return nc.srvPool[0], nil
 
 	// Obtener el índice del siguiente servidor
 	nextIndex := (i + 1) % len(nc.srvPool)
 	nextServer := nc.srvPool[nextIndex]
 
 	// Verificar el límite de reconexiones del siguiente servidor
-	maxReconnect := nc.Opts.MaxReconnect
 	if maxReconnect >= 0 && nextServer.reconnects >= maxReconnect {
 		// Si el siguiente servidor alcanzó el límite de reconexiones, continuar con el siguiente
 		return nc.selectNextServerOld()
@@ -2819,6 +2827,21 @@ func (nc *Conn) stopPingTimer() {
 	}
 }
 
+func (nc *Conn) checkPriorityServer(url string) {
+	// Check if this server is in BaseUrls
+	isPriorityServer := false
+	for _, s := range nc.Opts.PriorityServers {
+		if s == url {
+			isPriorityServer = true
+		}
+	}
+	if !isPriorityServer {
+		fmt.Println("Este nodo es principal")
+	} else {
+		fmt.Println("Este nodo NO es principal")
+	}
+}
+
 // Try to reconnect using the option parameters.
 // This function assumes we are allowed to reconnect.
 func (nc *Conn) doReconnect(err error, forceReconnect bool) {
@@ -3002,6 +3025,11 @@ func (nc *Conn) doReconnect(err error, forceReconnect bool) {
 
 		// Make sure to flush everything
 		nc.Flush()
+
+		if nc.Opts.CheckPriorityServers {
+			fmt.Println("se va a verificar si la ip es de un nodo principal")
+			nc.checkPriorityServer(cur.url.Host)
+		}
 
 		return
 	}
