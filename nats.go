@@ -2790,6 +2790,8 @@ func (nc *Conn) stopPingTimer() {
 }
 
 func (nc *Conn) checkPriorityServer(url string) {
+	url = "nats://" + url
+
 	// Check if this server is in BaseUrls
 	isPriorityServer := false
 	for _, s := range nc.Opts.PriorityServers {
