@@ -2924,14 +2924,17 @@ func (nc *Conn) tryPriorityServerReconnect() {
 	fmt.Println("tryPriorityServerReconnect init")
 	for {
 
-		_, err := ReconnectToBase(nc.Opts)
+		nnc, err := ReconnectToBase(nc.Opts)
 		if err == nil {
 			// Bloquear el nuevo nc para sincronizar la transición
-			fmt.Println("ReconnectToBase exitoso")
 			err := nc.ForceReconnect()
+			if err == nil {
+				fmt.Println("ReconnectToBase exitoso")
+				return
+			}
+
 			fmt.Println("ForceReconnect err", err)
-			//nnc.Close()
-			return
+			nnc.Close()
 		}
 
 		fmt.Println("ReconnectToBase err", err)
