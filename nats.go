@@ -2927,11 +2927,11 @@ func (nc *Conn) tryPriorityServerReconnect() {
 		nnc, err := ReconnectToBase(nc.Opts)
 		if err == nil {
 			// Bloquear el nuevo nc para sincronizar la transición
+			fmt.Println("ReconnectToBase exitoso")
 			nc.mu.Lock()
 			nc.doReconnect(nil, false)
 			nc.mu.Unlock()
 			nnc.Close()
-			fmt.Println("ReconnectToBase exitoso")
 			return
 		}
 
