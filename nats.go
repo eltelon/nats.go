@@ -2926,10 +2926,15 @@ func (nc *Conn) tryPriorityServerReconnect() {
 
 		nnc, err := ReconnectToBase(nc.Opts)
 		if err == nil {
-			nc.mu.Lock()
+			// Bloquear el nuevo nc para sincronizar la transición
+			nnc.mu.Lock()
 			oldnc := nc
+
+			// Reemplazar la conexión sin desbloquear el mutex antiguo
 			nc = nnc
-			oldnc.mu.Unlock()
+			nnc.mu.Unlock()
+
+			// Cerrar la conexión antigua
 			oldnc.Close()
 
 			fmt.Println("ReconnectToBase exitoso")
