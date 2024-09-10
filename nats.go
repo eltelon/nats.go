@@ -851,8 +851,8 @@ func Connect(url string, options ...Option) (*Conn, error) {
 	opts := GetDefaultOptions()
 	opts.Servers = processUrlString(url)
 	opts.PriorityServers = opts.Servers
-	fmt.Println("opts.PriorityServers", opts.PriorityServers)
-	fmt.Println("opts.Servers", opts.Servers)
+	fmt.Println("Connect | opts.PriorityServers", opts.PriorityServers)
+	fmt.Println("Connect | opts.Servers", opts.Servers)
 	for _, opt := range options {
 		if opt != nil {
 			if err := opt(&opts); err != nil {
@@ -860,6 +860,14 @@ func Connect(url string, options ...Option) (*Conn, error) {
 			}
 		}
 	}
+	return opts.Connect()
+}
+
+func ReconnectToBase(options Options) (*Conn, error) {
+	opts := options
+	opts.Servers = opts.PriorityServers
+	fmt.Println("ReconnectToBase | opts.PriorityServers", opts.PriorityServers)
+	fmt.Println("ReconnectToBase | opts.Servers", opts.Servers)
 	return opts.Connect()
 }
 
@@ -2913,7 +2921,22 @@ func (nc *Conn) stopPingTimer() {
 }
 
 func (nc *Conn) tryPriorityServerReconnect() {
+	for {
 
+		nnc, err := ReconnectToBase(nc.Opts)
+		if err == nil {
+			nc.mu.Lock()
+			oldnc := nc
+			nc = nnc
+			nc.bindToNewConn()
+			oldnc.Close()
+			nc.mu.Unlock()
+
+		}
+		// If we are here, we have tried all servers in PriorityServers
+		// and none of them were available. Wait before trying again.
+		time.Sleep(10 * time.Second) // Esperar antes de intentar de nuevo
+	}
 }
 
 func (nc *Conn) checkPriorityServer(url string) {
