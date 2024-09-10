@@ -2929,9 +2929,9 @@ func (nc *Conn) tryPriorityServerReconnect() {
 			nc.mu.Lock()
 			oldnc := nc
 			nc = nnc
-			nc.bindToNewConn()
+			oldnc.mu.Unlock()
 			oldnc.Close()
-			nc.mu.Unlock()
+
 			fmt.Println("ReconnectToBase exitoso")
 		}
 
