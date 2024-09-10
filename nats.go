@@ -1765,6 +1765,7 @@ const (
 func (nc *Conn) selectNextServerByType(i int) (*srv, error) {
 	switch nc.Opts.ReconnectType {
 	case ReconnectTypeSequential:
+		fmt.Println("ReconnectTypeSequential")
 		return nc.selectNextServerByIndex(i)
 	default:
 		return nc.selectNextServer()
