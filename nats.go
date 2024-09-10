@@ -2933,6 +2933,7 @@ func (nc *Conn) tryPriorityServerReconnect() {
 			oldnc.Close()
 
 			fmt.Println("ReconnectToBase exitoso")
+			return
 		}
 
 		fmt.Println("ReconnectToBase err", err)
