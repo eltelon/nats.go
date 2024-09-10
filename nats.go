@@ -2931,8 +2931,10 @@ func (nc *Conn) tryPriorityServerReconnect() {
 			nc.bindToNewConn()
 			oldnc.Close()
 			nc.mu.Unlock()
-
+			fmt.Println("ReconnectToBase exitoso")
 		}
+
+		fmt.Println("ReconnectToBase err", err)
 		// If we are here, we have tried all servers in PriorityServers
 		// and none of them were available. Wait before trying again.
 		time.Sleep(10 * time.Second) // Esperar antes de intentar de nuevo
