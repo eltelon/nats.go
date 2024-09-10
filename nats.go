@@ -851,8 +851,6 @@ func Connect(url string, options ...Option) (*Conn, error) {
 	opts := GetDefaultOptions()
 	opts.Servers = processUrlString(url)
 	opts.PriorityServers = opts.Servers
-	fmt.Println("Connect | opts.PriorityServers", opts.PriorityServers)
-	fmt.Println("Connect | opts.Servers", opts.Servers)
 	for _, opt := range options {
 		if opt != nil {
 			if err := opt(&opts); err != nil {
@@ -866,8 +864,6 @@ func Connect(url string, options ...Option) (*Conn, error) {
 func ReconnectToBase(options Options) (*Conn, error) {
 	opts := options
 	opts.Servers = opts.PriorityServers
-	fmt.Println("ReconnectToBase | opts.PriorityServers", opts.PriorityServers)
-	fmt.Println("ReconnectToBase | opts.Servers", opts.Servers)
 	return opts.Connect()
 }
 
@@ -1773,7 +1769,6 @@ const (
 func (nc *Conn) selectNextServerByType(i int) (*srv, error) {
 	switch nc.Opts.ReconnectType {
 	case ReconnectTypeSequential:
-		fmt.Println("ReconnectTypeSequential")
 		return nc.selectNextServerByIndex(i)
 	default:
 		return nc.selectNextServer()
@@ -1886,7 +1881,6 @@ func (nc *Conn) setupServerPool() error {
 		}
 	}
 
-	fmt.Println("nc.srvPool", nc.srvPool)
 	return nc.pickServer()
 }
 
@@ -1978,7 +1972,6 @@ func (nc *Conn) addURLToPool(sURL string, implicit, saveTLSName bool) error {
 
 	nc.srvPool = append(nc.srvPool, s)
 	nc.urls[u.Host] = struct{}{}
-	fmt.Println("addURLToPool finish")
 	printServerPool(nc.srvPool)
 	return nil
 }
@@ -2319,7 +2312,6 @@ func (nc *Conn) waitForExits() {
 // this call will force an immediate reconnect attempt (bypassing
 // the current reconnect delay).
 func (nc *Conn) ForceReconnect() error {
-	fmt.Println("ForceReconnect")
 	nc.mu.Lock()
 	defer nc.mu.Unlock()
 
@@ -2351,7 +2343,6 @@ func (nc *Conn) ForceReconnect() error {
 	nc.changeConnStatus(RECONNECTING)
 	go nc.doReconnect(nil, true)
 
-	fmt.Println("ForceReconnect done")
 	return nil
 }
 
