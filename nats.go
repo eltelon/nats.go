@@ -2921,6 +2921,7 @@ func (nc *Conn) stopPingTimer() {
 }
 
 func (nc *Conn) tryPriorityServerReconnect() {
+	fmt.Println("tryPriorityServerReconnect init")
 	for {
 
 		nnc, err := ReconnectToBase(nc.Opts)
