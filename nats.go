@@ -281,6 +281,7 @@ type Options struct {
 	Servers              []string
 	PriorityServers      []string
 	CheckPriorityServers bool
+	ReconnectType        string
 
 	// NoRandomize configures whether we will randomize the
 	// server pool.
@@ -1012,6 +1013,13 @@ func PriorityServers() Option {
 	}
 }
 
+func ReconnectType(typ string) Option {
+	return func(o *Options) error {
+		o.ReconnectType = typ
+		return nil
+	}
+}
+
 // NoEcho is an Option to turn off messages echoing back from a server.
 // Note this is supported on servers >= version 1.2. Proto 1 or greater.
 func NoEcho() Option {
@@ -1611,6 +1619,80 @@ func (o Options) Connect() (*Conn, error) {
 	return nc, nil
 }
 
+func (o Options) TmpConnect() (*Conn, error) {
+	nc := &Conn{Opts: o}
+
+	// Some default options processing.
+	if nc.Opts.MaxPingsOut == 0 {
+		nc.Opts.MaxPingsOut = DefaultMaxPingOut
+	}
+	// Allow old default for channel length to work correctly.
+	if nc.Opts.SubChanLen == 0 {
+		nc.Opts.SubChanLen = DefaultMaxChanLen
+	}
+	// Default ReconnectBufSize
+	if nc.Opts.ReconnectBufSize == 0 {
+		nc.Opts.ReconnectBufSize = DefaultReconnectBufSize
+	}
+	// Ensure that Timeout is not 0
+	if nc.Opts.Timeout == 0 {
+		nc.Opts.Timeout = DefaultTimeout
+	}
+
+	// Check first for user jwt callback being defined and nkey.
+	if nc.Opts.UserJWT != nil && nc.Opts.Nkey != "" {
+		return nil, ErrNkeyAndUser
+	}
+
+	// Check if we have an nkey but no signature callback defined.
+	if nc.Opts.Nkey != "" && nc.Opts.SignatureCB == nil {
+		return nil, ErrNkeyButNoSigCB
+	}
+
+	// Allow custom Dialer for connecting using a timeout by default
+	if nc.Opts.Dialer == nil {
+		nc.Opts.Dialer = &net.Dialer{
+			Timeout: nc.Opts.Timeout,
+		}
+	}
+
+	// If the TLSHandshakeFirst option is specified, make sure that
+	// the Secure boolean is true.
+	if nc.Opts.TLSHandshakeFirst {
+		nc.Opts.Secure = true
+	}
+
+	if err := nc.setupServerPool(); err != nil {
+		return nil, err
+	}
+
+	// Create the async callback handler.
+	nc.ach = &asyncCallbacksHandler{}
+	nc.ach.cond = sync.NewCond(&nc.ach.mu)
+
+	// Set a default error handler that will print to stderr.
+	if nc.Opts.AsyncErrorCB == nil {
+		nc.Opts.AsyncErrorCB = defaultErrHandler
+	}
+
+	// Create reader/writer
+	nc.newReaderWriter()
+
+	connectionEstablished, err := nc.connect()
+	if err != nil {
+		return nil, err
+	}
+
+	// Spin up the async cb dispatcher on success
+	go nc.ach.asyncCBDispatcher()
+
+	if connectionEstablished && nc.Opts.ConnectedCB != nil {
+		nc.ach.push(func() { nc.Opts.ConnectedCB(nc) })
+	}
+
+	return nc, nil
+}
+
 func defaultErrHandler(nc *Conn, sub *Subscription, err error) {
 	var cid uint64
 	if nc != nil {
@@ -1674,12 +1756,52 @@ func (nc *Conn) currentServer() (int, *srv) {
 	return -1, nil
 }
 
-func (nc *Conn) selectNextServer(i int) (*srv, error) {
+// Define types of reconnects
+const (
+	ReconnectTypeSequential = "sequential"
+)
+
+// Select the next server to connect to based on the type of reconnect
+func (nc *Conn) selectNextServerByType(i int) (*srv, error) {
+	switch nc.Opts.ReconnectType {
+	case ReconnectTypeSequential:
+		return nc.selectNextServerByIndex(i)
+	default:
+		return nc.selectNextServer()
+	}
+}
+
+// Pop the current server and put onto the end of the list. Select head of list as long
+// as number of reconnect attempts under MaxReconnect.
+func (nc *Conn) selectNextServer() (*srv, error) {
+	i, s := nc.currentServer()
+	if i < 0 {
+		return nil, ErrNoServers
+	}
+	sp := nc.srvPool
+	num := len(sp)
+	copy(sp[i:num-1], sp[i+1:num])
+	maxReconnect := nc.Opts.MaxReconnect
+	if maxReconnect < 0 || s.reconnects < maxReconnect {
+		nc.srvPool[num-1] = s
+	} else {
+		nc.srvPool = sp[0 : num-1]
+	}
+	if len(nc.srvPool) <= 0 {
+		nc.current = nil
+		return nil, ErrNoServers
+	}
+	nc.current = nc.srvPool[0]
+	return nc.srvPool[0], nil
+}
+
+// This function is used to select the next server to connect to.
+func (nc *Conn) selectNextServerByIndex(i int) (*srv, error) {
 	nextIndex := (i) % len(nc.srvPool)
 	nextServer := nc.srvPool[nextIndex]
 	maxReconnect := nc.Opts.MaxReconnect
 	if maxReconnect >= 0 && nextServer.reconnects >= maxReconnect {
-		return nc.selectNextServer(i + 1)
+		return nc.selectNextServerByIndex(i + 1)
 	}
 	// Actualizar el índice de selección
 	nc.current = nextServer
@@ -2789,6 +2911,10 @@ func (nc *Conn) stopPingTimer() {
 	}
 }
 
+func (nc *Conn) tryPriorityServerReconnect() {
+
+}
+
 func (nc *Conn) checkPriorityServer(url string) {
 	url = "nats://" + url
 
@@ -2801,6 +2927,7 @@ func (nc *Conn) checkPriorityServer(url string) {
 	}
 	if !isPriorityServer {
 		fmt.Println("Este nodo NO es principal")
+		go nc.tryPriorityServerReconnect()
 	} else {
 		fmt.Println("Este nodo es principal")
 	}
@@ -2858,10 +2985,10 @@ func (nc *Conn) doReconnect(err error, forceReconnect bool) {
 	}
 
 	fmt.Println("Debemos buscar una ip a reconectar", len(nc.srvPool))
+
 	for i := 0; len(nc.srvPool) > 0; {
 
-		cur, err := nc.selectNextServer(i)
-		fmt.Println("selectNextServer(i) ", i)
+		cur, err := nc.selectNextServerByType(i)
 		if err != nil {
 			nc.err = err
 			break
