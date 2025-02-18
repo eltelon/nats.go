@@ -2557,9 +2557,9 @@ func (nc *Conn) connect() (bool, error) {
 	nc.initc = true
 	// The pool may change inside the loop iteration due to INFO protocol.
 	for i := 0; i < len(nc.srvPool); i++ {
-		fmt.Println("Se intenta conectar con el servidor", i)
+		//fmt.Println("Se intenta conectar con el servidor", i)
 		nc.current = nc.srvPool[i]
-		fmt.Println("nc.srvPool[i]", nc.current.url)
+		//fmt.Println("nc.srvPool[i]", nc.current.url)
 
 		if err = nc.createConn(); err == nil {
 			// This was moved out of processConnectInit() because
@@ -2573,10 +2573,10 @@ func (nc *Conn) connect() (bool, error) {
 				nc.current.reconnects = 0
 				nc.current.lastErr = nil
 
-				fmt.Println("Conexión exitosa con el servidor", i)
+				//fmt.Println("Conexión exitosa con el servidor", i)
 				break
 			} else {
-				fmt.Println("Error al procesar la conexión con el servidor", i, err.Error())
+				//fmt.Println("Error al procesar la conexión con el servidor", i, err.Error())
 				nc.mu.Unlock()
 				nc.close(DISCONNECTED, false, err)
 				nc.mu.Lock()
@@ -2997,7 +2997,7 @@ func (nc *Conn) doReconnect(err error, forceReconnect bool) {
 		}
 	}
 
-	fmt.Println("Debemos buscar una ip a reconectar", len(nc.srvPool))
+	//fmt.Println("Debemos buscar una ip a reconectar", len(nc.srvPool))
 
 	for i := 0; len(nc.srvPool) > 0; {
 
@@ -3006,7 +3006,7 @@ func (nc *Conn) doReconnect(err error, forceReconnect bool) {
 			nc.err = err
 			break
 		}
-		fmt.Println("Vamos a intentar reconectar a la ip: ", cur.url.Host)
+		//fmt.Println("Vamos a intentar reconectar a la ip: ", cur.url.Host)
 
 		doSleep := i+1 >= len(nc.srvPool) && !forceReconnect
 		forceReconnect = false
@@ -3780,7 +3780,7 @@ func (nc *Conn) processInfo(info string) error {
 		if _, present := nc.urls[curl]; !present {
 			hasNew = true
 		}
-		fmt.Println("processInfo | Vamos a agregar la ip: ", curl)
+		//fmt.Println("processInfo | Vamos a agregar la ip: ", curl)
 		nc.addURLToPool(fmt.Sprintf("%s://%s", nc.connScheme(), curl), true, saveTLS)
 	}
 	if hasNew {
